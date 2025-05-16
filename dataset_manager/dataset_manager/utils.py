@@ -5,7 +5,7 @@ import zipfile
 import numpy as np
 from PIL import Image, UnidentifiedImageError
 
-current_dir = os.getcwd()
+current_dir = os.path.dirname(os.path.abspath(__file__))
 file_name = 'dog-and-cat-classification-dataset.zip'
 dataset_directory = os.path.join(current_dir, 'PetImages')
 
@@ -17,8 +17,7 @@ outputs = []
 # Download and extract learning dataset if its not
 if not os.path.exists(dataset_directory):
     if not os.path.exists(os.path.join(current_dir, file_name)):
-        command = f'''#!/bin/bash
-        curl -L -o {current_dir}/{file_name}  https://www.kaggle.com/api/v1/datasets/download/bhavikjikadara/dog-and-cat-classification-dataset'''
+        command = f'''curl -L -o {current_dir}/{file_name}  https://www.kaggle.com/api/v1/datasets/download/bhavikjikadara/dog-and-cat-classification-dataset'''
         print(command)
         downloading_process = subprocess.run(command, shell=True)
         print(downloading_process)
@@ -37,7 +36,7 @@ def get_images():
 
     if os.path.exists(os.path.join(current_dir, 'numpy_dataset.npz')):
         print("Dataset was found. Loading...")
-        data = np.load('numpy_dataset.npz')
+        data = np.load(os.path.join(current_dir, 'numpy_dataset.npz'))
         images = data['images']
         outputs = data['outputs']
         images_are_loaded = True

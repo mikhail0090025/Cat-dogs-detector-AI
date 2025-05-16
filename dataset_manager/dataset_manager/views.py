@@ -1,26 +1,18 @@
-from fastapi import FastAPI, HTTPException
-from fastapi.responses import Response, JSONResponse, HTMLResponse, StreamingResponse
-import utils
+from django.http import JsonResponse, StreamingHttpResponse
+from . import utils
 import numpy as np
 
-app = FastAPI()
+def root(request):
+    return JsonResponse(data={'Response': 'This is a root of dataset manager'}, status=200)
 
-app.route('/')
-def root():
-    return JSONResponse({'Response': 'This is a root of dataset manager'}, status_code=200)
-
-app.get('/get_images')
-def get_images():
+def get_images(request):
     images = utils.images
     def iterfile():
         yield images.tobytes()
+    return StreamingHttpResponse(iterfile(), content_type="application/octet-stream")
 
-    return StreamingResponse(iterfile(), media_type="application/octet-stream")
-
-app.get('/get_outputs')
-def get_outputs():
+def get_outputs(request):
     outputs = utils.outputs
     def iterfile():
         yield outputs.tobytes()
-
-    return StreamingResponse(iterfile(), media_type="application/octet-stream")
+    return StreamingHttpResponse(iterfile(), content_type="application/octet-stream")
