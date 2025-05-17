@@ -25,8 +25,7 @@ SECRET_KEY = 'django-insecure-)w36+p3$_w_#!h)9%1u)j19b_e5#bpl#g9&y+4x5z%7p9jbmt7
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
-
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'dataset_manager', 'dataset_manager:8000']
 
 # Application definition
 
@@ -37,6 +36,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'neural_net',
 ]
 
 MIDDLEWARE = [

@@ -1,0 +1,49 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Install Docker
+        run: |
+          sudo apt install -y apt-transport-https ca-certificates curl software-properties-common tree
+          sudo apt update
+          sudo apt install -y docker-ce docker-ce-cli containerd.io
+          sudo systemctl start docker
+          sudo systemctl enable docker
+          sudo curl -L "https://github.com/docker/compose/releases/download/v2.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+          sudo chmod +x /usr/local/bin/docker-compose
+          docker-compose --version
+
+      - name: Build Docker images
+        run: sudo docker-compose -f docker-compose.yml build
+
+      - name: Run Docker containers
+        run: sudo docker-compose -f docker-compose.yml up -d
+
+      - name: Check services
+        run: |
+          sleep 20  # Time for start
+          if curl -f http://localhost:5000/; then echo "Service on port 5000 has successfully started"; else echo "Service on port 5000 couldn't start"; exit 1; fi
+          if curl -f http://localhost:5001/; then echo "Service on port 5001 has successfully started"; else echo "Service on port 5001 couldn't start"; exit 1; fi
+
+      - name: Show logs on failure
+        if: failure()
+        run: |
+          sudo docker-compose logs images_manager
+          tree
+
+      - name: Stop Docker containers
+        run: sudo docker-compose -f docker-compose.yml down

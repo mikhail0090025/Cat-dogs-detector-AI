@@ -4,15 +4,16 @@ services:
       context: .
       dockerfile: dataset_manager/Dockerfile
     ports:
-      - "8000:8000"
+      - "5000:5000"
     networks:
       - app-network
+
   neural_net:
     build:
       context: .
       dockerfile: neural_net/Dockerfile
     ports:
-      - "8001:8001"
+      - "5001:5001"
     networks:
       - app-network
 
