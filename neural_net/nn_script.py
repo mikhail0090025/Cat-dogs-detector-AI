@@ -1,30 +1,40 @@
 import numpy as np
-import requests
-from urllib3.exceptions import MaxRetryError
-import time
+import aiohttp
+import asyncio
+import json
 
-print('Neural net script started!')
+async def fetch_data(session, url):
+    async with session.get(url, timeout=10, ssl=False) as response:
+        response.raise_for_status()
+        data = await response.json()
+        return data
 
-for i in range(15):
-    print(f'Attempt {i}')
-    try:
-        images_response = requests.get('http://0.0.0.0:5000/get_images')
-        images_response.raise_for_status()
-        images_json = images_response.json()
+async def main():
+    print('Neural net script started!', flush=True)
 
-        print(images_json)
-        print(type(images_json))
+    async with aiohttp.ClientSession() as session:
+        for i in range(40):
+            print(f'Attempt {i}', flush=True)
+            try:
+                images_data = await fetch_data(session, 'http://dataset_manager:5000/get_images')
+                images = np.array(images_data['images'])
+                outputs_data = await fetch_data(session, 'http://dataset_manager:5000/get_outputs')
+                outputs = np.array(outputs_data['outputs'])
 
-        outputs_response = requests.get('http://0.0.0.0:5000/get_outputs')
-        outputs_response.raise_for_status()
-        outputs_json = outputs_response.json()
+                print(images)
+                print(outputs)
 
-        print(outputs_json)
-        print(type(outputs_json))
-        print('Dataset was got')
-        break
-    except MaxRetryError as e:
-        print('Couldnt connect. Retry in 5 seconds...')
-    except Exception as e:
-        print(f'Unexpected error has occured: {e}')
-    time.sleep(5)
+                print('Images shape:', images.shape, flush=True)
+                print('Outputs shape:', outputs.shape, flush=True)
+                print('Dataset was got', flush=True)
+                break
+            except aiohttp.ClientError as e:
+                print(f'Unexpected error has occurred: {e}', flush=True)
+                print('Couldnt connect. Retry in 10 seconds...', flush=True)
+                await asyncio.sleep(10)
+            except Exception as e:
+                print(f'Unexpected error has occurred: {e}', flush=True)
+                await asyncio.sleep(10) 
+
+if __name__ == '__main__':
+    asyncio.run(main())

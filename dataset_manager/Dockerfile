@@ -15,9 +15,7 @@ RUN apt-get update && apt-get install -y tree curl && apt-get clean
 
 USER root
 
-EXPOSE 5000
-
 HEALTHCHECK --interval=10s --timeout=5s --retries=3 \
     CMD curl -f http://localhost:5000/ || exit 1
 
-CMD ["sh", "-c", "gunicorn -w 4 -b 0.0.0.0:5000 dataset_manager_api:app"]
+CMD python dataset_manager_script.py && python dataset_manager_api.py

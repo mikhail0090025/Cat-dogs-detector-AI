@@ -8,5 +8,17 @@ app = Flask(__name__)
 def root():
     return {'Response': 'This is a root of neural net'}, 200
 
+@app.route('/one_epoch', methods=['GET'])
+def one_epoch():
+    return {'Response': 'This is a root of neural net'}, 200
+
+@app.route('/inputs', methods=['GET'])
+def inputs():
+    return {'Response': nn_script.images_json}, 200
+
+@app.route('/outputs', methods=['GET'])
+def outputs():
+    return {'Response': nn_script.outputs_json}, 200
+
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5001)
+    app.run(host='0.0.0.0', port=5001, ssl_context=None)
