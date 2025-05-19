@@ -14,11 +14,11 @@ def one_epoch():
 
 @app.route('/inputs', methods=['GET'])
 def inputs():
-    return {'Response': nn_script.images_json}, 200
+    return {'Response': nn_script.images}, 200
 
 @app.route('/outputs', methods=['GET'])
 def outputs():
-    return {'Response': nn_script.outputs_json}, 200
+    return {'Response': nn_script.outputs}, 200
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5001, ssl_context=None)

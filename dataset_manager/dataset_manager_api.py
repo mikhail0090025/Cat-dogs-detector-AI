@@ -14,13 +14,13 @@ def root():
 def get_images():
     if not os.path.exists('numpy_dataset.npz'):
         return jsonify({'error': 'Dataset file not found'}), 404
-    return send_file('numpy_dataset.npz', mimetype='application/octet-stream', as_attachment=True, download_name='images.npz')
+    return send_file('numpy_dataset.npz', mimetype='application/zip', as_attachment=True, download_name='images.npz')
 
 @app.route('/get_outputs', methods=['GET'])
 def get_outputs():
     if not os.path.exists('numpy_dataset.npz'):
         return jsonify({'error': 'Dataset file not found'}), 404
-    return send_file('numpy_dataset.npz', mimetype='application/octet-stream', as_attachment=True, download_name='outputs.npz')
+    return send_file('numpy_dataset.npz', mimetype='application/zip', as_attachment=True, download_name='outputs.npz')
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, ssl_context=None)
