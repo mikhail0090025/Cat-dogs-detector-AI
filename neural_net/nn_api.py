@@ -36,5 +36,14 @@ def inputs():
 def outputs():
     return {'Response': nn_script.outputs}, 200
 
+@app.route('/graphic', methods=['GET'])
+def graphic():
+    try:
+        fig = nn_script.get_graphic()
+        fig_json = fig.to_json()
+        return Response(fig_json, mimetype='application/json')
+    except Exception as e:
+        return {'Response': f'Unexpected error has occured: {e}, ({type(e)})'}, 500
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5001, ssl_context=None)

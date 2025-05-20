@@ -6,6 +6,7 @@ import tensorflow as tf
 import keras
 import os
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
+import plotly.graph_objects as go
 
 # Learning data
 train_generator = None
@@ -113,6 +114,21 @@ def go_epochs(model, epochs_count):
     all_accuracies.extend(history.history['accuracy'])
     all_val_accuracies.extend(history.history['val_accuracy'])
 
+def get_graphic():
+    global all_losses, all_val_losses, all_accuracies, all_val_accuracies
+    fig = go.Figure(
+        data=[
+            go.Bar(y=all_losses, name='Train Loss'),
+            go.Bar(y=all_val_losses, name='Validation Loss'),
+            go.Bar(y=all_accuracies, name='Train Accuracy'),
+            go.Bar(y=all_val_accuracies, name='Validation Accuracy'),
+        ],
+
+        layout_title_text="Statistics"
+    )
+
+    return fig
+
 async def fetch_data(session, url, filepath):
     async with session.get(url, timeout=10, ssl=False) as response:
         response.raise_for_status()
@@ -154,7 +170,7 @@ async def main():
     if not dataset_was_got:
         print("Dataset wasnt got.")
         exit(1)
-    go_epochs(main_model, 5)
+    go_epochs(main_model, 20)
 
 if __name__ == '__main__':
     asyncio.run(main())
