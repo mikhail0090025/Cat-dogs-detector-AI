@@ -9,25 +9,22 @@
 </head>
 <body>
     <h1>Welcome to the Frontend Microservice!</h1>
-    <!-- Контейнер для графика -->
     <div id="graph"></div>
 
-    <!-- JavaScript для загрузки и отображения графика -->
     <script>
-        // Функция для получения данных с эндпоинта
         function loadGraph() {
-            fetch('http://localhost:5001/graphic')  // Замени на свой эндпоинт
+            fetch('http://localhost:5001/graphic')
                 .then(response => response.json())
                 .then(data => {
-                    // Парсим JSON и рендерим график
+                    try {console.log(data);} catch{console.log('data is not defined');}
+                    try{console.log(data.graph);} catch{console.log('data.graph is not defined');}
                     Plotly.newPlot('graph', JSON.parse(data.graph), {});
                 })
                 .catch(error => {
-                    console.error('Ошибка загрузки графика:', error);
+                    console.error('Error loading graphic:', error);
                 });
         }
 
-        // Вызываем функцию при загрузке страницы
         window.onload = loadGraph;
     </script>
 </body>

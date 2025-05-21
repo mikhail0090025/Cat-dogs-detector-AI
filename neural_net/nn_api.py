@@ -1,4 +1,4 @@
-from flask import Flask, Response
+from flask import Flask, Response, request
 import numpy as np
 import nn_script
 from flask_cors import CORS
@@ -12,17 +12,21 @@ def root():
     return {'Response': 'This is a root of neural net'}, 200
 
 @app.route('/pass_epochs', methods=['POST'])
-def pass_epochs(epochs_count):
+def pass_epochs():
     try:
-        if nn_script.main_model is None:
-            return {'Response': f'Model is not ready yet. Wait...'}, 500
+        data = request.get_json()
+        if not data:
+            return {'Response': 'No JSON data provided'}, 400
+        epochs_count = data.get('epochs_count')
+        print(f"epochs_count: {epochs_count}")
+
         if epochs_count is None:
             return {'Response': f'Epochs count was none'}, 400
         if type(epochs_count) is not int:
             return {'Response': f'Epochs count was not an integer ({type(epochs_count).__name__}, {epochs_count})'}, 400
         if epochs_count <= 0:
             return {'Response': f'Epochs count cant be zero or less, it should be at least 1 ({epochs_count})'}, 400
-        nn_script.go_epochs(nn_script.main_model, epochs_count)
+        nn_script.go_epochs(epochs_count)
         return {'Response': f'{epochs_count} epochs has successfully run!'}, 200
     except Exception as e:
         return {'Response': f'Unexpected error has occured: {e}, ({type(e)})'}, 500
@@ -38,7 +42,8 @@ def outputs():
 @app.route('/graphic', methods=['GET'])
 def graphic():
     try:
-        fig = nn_script.get_graphic()
+        print(nn_script.all_losses)
+        fig = nn_script.get_graphic(nn_script.all_losses, nn_script.all_val_losses, nn_script.all_accuracies, nn_script.all_val_accuracies)
         graph_json = fig.to_json()
         return {'graph': graph_json}
     except Exception as e:

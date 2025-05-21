@@ -7,6 +7,7 @@ import keras
 import os
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 import plotly.graph_objects as go
+import json
 
 # Learning data
 train_generator = None
@@ -16,6 +17,7 @@ SaveCheckpoint = None
 main_model = None
 
 # Statistics
+print("All variables are reset")
 all_losses = []
 all_val_losses = []
 all_accuracies = []
@@ -23,6 +25,30 @@ all_val_accuracies = []
 
 path_to_model = os.path.join(os.path.dirname(__file__), 'model.keras')
 print(f"Path to model: {path_to_model}")
+
+# Save statistic
+def save_metrics():
+    global all_losses, all_val_losses, all_accuracies, all_val_accuracies
+    metrics = {
+        'all_losses': all_losses,
+        'all_val_losses': all_val_losses,
+        'all_accuracies': all_accuracies,
+        'all_val_accuracies': all_val_accuracies
+    }
+    with open('metrics.json', 'w') as f:
+        json.dump(metrics, f)
+        print(f.__dir__())
+
+# Load statistic
+def load_metrics():
+    global all_losses, all_val_losses, all_accuracies, all_val_accuracies
+    if os.path.exists('metrics.json'):
+        with open('metrics.json', 'r') as f:
+            metrics = json.load(f)
+            all_losses = metrics.get('all_losses', [])
+            all_val_losses = metrics.get('all_val_losses', [])
+            all_accuracies = metrics.get('all_accuracies', [])
+            all_val_accuracies = metrics.get('all_val_accuracies', [])
 
 # Create or load model
 def get_model():
@@ -34,7 +60,7 @@ def get_model():
             print('Model not found, creating a new one')
 
         model = tf.keras.models.Sequential([
-            keras.layers.Conv2D(32, (3,3), activation="relu", input_shape=(40, 40, 3)),
+            keras.layers.Conv2D(32, (3,3), activation="relu", input_shape=(30, 30, 3)),
             keras.layers.MaxPooling2D((2, 2), strides=(2, 2)),
 
             keras.layers.Conv2D(64, (3,3), activation="relu"),
@@ -54,8 +80,8 @@ def get_model():
             keras.layers.Dense(2, activation='softmax')
         ])
         model.compile(optimizer='adam',
-                    loss='categorical_crossentropy',
-                    metrics=['accuracy'])
+            loss='categorical_crossentropy',
+            metrics=['accuracy'])
         model.summary()
         tf.keras.models.save_model(
             model, path_to_model, overwrite=True,
@@ -63,6 +89,7 @@ def get_model():
         return model
     except Exception as e:
         print(f"Error while loading NN happened: {e}")
+        raise
 
 def prepare_dataset(images, outputs):
     global train_generator, val_generator, lr_scheduler, SaveCheckpoint
@@ -80,17 +107,18 @@ def prepare_dataset(images, outputs):
     train_generator = datagen.flow(
         images,
         outputs,
-        batch_size=512,
+        batch_size=64,
         subset='training',
         shuffle=True
     )
     val_generator = val_datagen.flow(
         images,
         outputs,
-        batch_size=512,
+        batch_size=64,
         subset='validation',
         shuffle=False
     )
+
     lr_scheduler = keras.callbacks.ReduceLROnPlateau(
         monitor='accuracy', factor=0.5, patience=3, min_lr=1e-6
     )
@@ -102,8 +130,10 @@ def prepare_dataset(images, outputs):
         mode='auto',
         save_freq='epoch')
 
-def go_epochs(model, epochs_count):
-    history = model.fit(
+def go_epochs(epochs_count):
+    global all_losses, all_val_losses, all_accuracies, all_val_accuracies, main_model
+    load_metrics()
+    history = main_model.fit(
         train_generator,
         epochs=epochs_count,
         validation_data=val_generator,
@@ -113,8 +143,12 @@ def go_epochs(model, epochs_count):
     all_val_losses.extend(history.history['val_loss'])
     all_accuracies.extend(history.history['accuracy'])
     all_val_accuracies.extend(history.history['val_accuracy'])
+    print("Updated metrics:", all_losses, all_val_losses, all_accuracies, all_val_accuracies)
+    save_metrics()
 
 def get_graphic(losses, val_losses, accuracies, val_accuracies):
+    global all_losses, all_val_losses, all_accuracies, all_val_accuracies
+    load_metrics()
     if not all([losses, val_losses, accuracies, val_accuracies]):
         raise ValueError("Metrics are empty. Call 'go_epochs' at least once.")
     lengths = [len(losses), len(val_losses), len(accuracies), len(val_accuracies)]
@@ -122,16 +156,17 @@ def get_graphic(losses, val_losses, accuracies, val_accuracies):
         raise ValueError(f"Length of lists of metrics is different: {lengths}")
     fig = go.Figure(
         data=[
-            go.Bar(x=list(range(len(losses))), y=losses, name='Train Loss', marker_color='blue'),
-            go.Bar(x=list(range(len(val_losses))), y=val_losses, name='Validation Loss', marker_color='red'),
-            go.Bar(x=list(range(len(accuracies))), y=accuracies, name='Train Accuracy', marker_color='green'),
-            go.Bar(x=list(range(len(val_accuracies))), y=val_accuracies, name='Validation Accuracy', marker_color='orange'),
+            go.Scatter(x=list(range(len(losses))), y=losses, name='Train Loss', line=dict(color='blue')),
+            go.Scatter(x=list(range(len(val_losses))), y=val_losses, name='Validation Loss', line=dict(color='red')),
+            go.Scatter(x=list(range(len(accuracies))), y=accuracies, name='Train Accuracy', line=dict(color='green')),
+            go.Scatter(x=list(range(len(val_accuracies))), y=val_accuracies, name='Validation Accuracy', line=dict(color='orange')),
         ],
         layout_title_text="Training Statistics"
     )
     fig.update_layout(
         xaxis_title="Epoch",
         yaxis_title="Value",
+        yaxis_range=[0, 1],
         template='plotly_dark',
         barmode='group'
     )
@@ -178,7 +213,7 @@ async def main():
     if not dataset_was_got:
         print("Dataset wasnt got.")
         exit(1)
-    go_epochs(main_model, 10)
+    go_epochs(10)
 
 if __name__ == '__main__':
     asyncio.run(main())

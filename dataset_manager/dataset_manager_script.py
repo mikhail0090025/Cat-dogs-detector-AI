@@ -32,7 +32,7 @@ async def extract_zip(zip_path, extract_to):
             zip_ref.extractall(extract_to)
     print("Dataset extracted to:", extract_to)
 
-async def process_images(folder):
+async def process_images(folder, category):
     global images, outputs
     all_files = os.listdir(folder)
     max_files_count = 2000
@@ -42,14 +42,12 @@ async def process_images(folder):
             print(f"Path: {path}\n{i+1}/{max_files_count}")
             img = Image.open(path)
             img = img.convert("RGB")
-            img_resized = img.resize((40, 40), Image.Resampling.LANCZOS)
+            img_resized = img.resize((30, 30), Image.Resampling.LANCZOS)
             img_array = ((np.array(img_resized) / 127.5) - 1).astype(np.float32)
             images.append(img_array)
             outputs.append([0] * 2)
-            if "cat" in filename.lower():
-                outputs[-1][0] = 1  # Cat
-            elif "dog" in filename.lower():
-                outputs[-1][1] = 1  # Dog
+            outputs[-1][category] = 1
+            print("Dog image" if category == 0 else "Cat image")
         except UnidentifiedImageError:
             print(f"Error loading {path}: not an image, skipping")
             continue
@@ -70,16 +68,18 @@ async def get_images():
         url = "https://www.kaggle.com/api/v1/datasets/download/bhavikjikadara/dog-and-cat-classification-dataset"
         zip_path = os.path.join(current_dir, file_name)
 
-        async with aiohttp.ClientSession() as session:
-            await download_dataset(session, url, zip_path)
+        if not os.path.exists(dataset_directory):
+            if not os.path.exists(os.path.join(current_dir, file_name)):
+                async with aiohttp.ClientSession() as session:
+                    await download_dataset(session, url, zip_path)
             await extract_zip(zip_path, current_dir)
 
         all_folders = [
-            os.path.join(dataset_directory, "Cat"),
             os.path.join(dataset_directory, "Dog"),
+            os.path.join(dataset_directory, "Cat"),
         ]
 
-        tasks = [process_images(folder) for folder in all_folders]
+        tasks = [process_images(folder, all_folders.index(folder)) for folder in all_folders]
         await asyncio.gather(*tasks)
 
         images = np.array(images, dtype=np.float32)
