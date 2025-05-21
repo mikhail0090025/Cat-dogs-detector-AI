@@ -114,19 +114,27 @@ def go_epochs(model, epochs_count):
     all_accuracies.extend(history.history['accuracy'])
     all_val_accuracies.extend(history.history['val_accuracy'])
 
-def get_graphic():
-    global all_losses, all_val_losses, all_accuracies, all_val_accuracies
+def get_graphic(losses, val_losses, accuracies, val_accuracies):
+    if not all([losses, val_losses, accuracies, val_accuracies]):
+        raise ValueError("Metrics are empty. Call 'go_epochs' at least once.")
+    lengths = [len(losses), len(val_losses), len(accuracies), len(val_accuracies)]
+    if len(set(lengths)) > 1:
+        raise ValueError(f"Length of lists of metrics is different: {lengths}")
     fig = go.Figure(
         data=[
-            go.Bar(y=all_losses, name='Train Loss'),
-            go.Bar(y=all_val_losses, name='Validation Loss'),
-            go.Bar(y=all_accuracies, name='Train Accuracy'),
-            go.Bar(y=all_val_accuracies, name='Validation Accuracy'),
+            go.Bar(x=list(range(len(losses))), y=losses, name='Train Loss', marker_color='blue'),
+            go.Bar(x=list(range(len(val_losses))), y=val_losses, name='Validation Loss', marker_color='red'),
+            go.Bar(x=list(range(len(accuracies))), y=accuracies, name='Train Accuracy', marker_color='green'),
+            go.Bar(x=list(range(len(val_accuracies))), y=val_accuracies, name='Validation Accuracy', marker_color='orange'),
         ],
-
-        layout_title_text="Statistics"
+        layout_title_text="Training Statistics"
     )
-
+    fig.update_layout(
+        xaxis_title="Epoch",
+        yaxis_title="Value",
+        template='plotly_dark',
+        barmode='group'
+    )
     return fig
 
 async def fetch_data(session, url, filepath):
@@ -170,7 +178,7 @@ async def main():
     if not dataset_was_got:
         print("Dataset wasnt got.")
         exit(1)
-    go_epochs(main_model, 20)
+    go_epochs(main_model, 10)
 
 if __name__ == '__main__':
     asyncio.run(main())

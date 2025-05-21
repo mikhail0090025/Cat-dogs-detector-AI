@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Main Page with Graph</title>
+    <!-- Подключение plotly.js из CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/1.33.1/plotly.min.js" integrity="sha512-V0j9LhrK9IMNdFYZqh+IqU4cjo7wdxyHNyH+L0td4HryBuZ7Oq6QxP2/CWr6TituX31+gv5PnolvERuTbz8UNA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+</head>
+<body>
+    <h1>Welcome to the Frontend Microservice!</h1>
+    <!-- Контейнер для графика -->
+    <div id="graph"></div>
+
+    <!-- JavaScript для загрузки и отображения графика -->
+    <script>
+        // Функция для получения данных с эндпоинта
+        function loadGraph() {
+            fetch('http://localhost:5001/graphic')  // Замени на свой эндпоинт
+                .then(response => response.json())
+                .then(data => {
+                    // Парсим JSON и рендерим график
+                    Plotly.newPlot('graph', JSON.parse(data.graph), {});
+                })
+                .catch(error => {
+                    console.error('Ошибка загрузки графика:', error);
+                });
+        }
+
+        // Вызываем функцию при загрузке страницы
+        window.onload = loadGraph;
+    </script>
+</body>
+</html>
