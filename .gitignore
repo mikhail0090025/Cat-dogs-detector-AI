@@ -1,5 +1,6 @@
 numpy_dataset.npz
 dog-and-cat-classification-dataset.zip
 /dataset_manager/PetImages
+/dataset_manager/dataset_manager/PetImages
 __pycache__
 model.keras
