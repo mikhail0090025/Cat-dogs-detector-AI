@@ -22,4 +22,4 @@ USER root
 HEALTHCHECK --interval=10s --timeout=5s --retries=3 \
     CMD curl -f http://localhost:5001/ || exit 1
 
-CMD python nn_script.py && python nn_api.py
+CMD python nn_api.py

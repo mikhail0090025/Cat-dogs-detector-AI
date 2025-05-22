@@ -9,22 +9,20 @@ from tensorflow.keras.preprocessing.image import ImageDataGenerator
 import plotly.graph_objects as go
 import json
 
-# Learning data
-train_generator = None
-val_generator = None
-lr_scheduler = None
-SaveCheckpoint = None
-main_model = None
+path_to_model = os.path.join(os.path.dirname(__file__), 'model.keras')
+print(f"Path to model: {path_to_model}")
 
-# Statistics
-print("All variables are reset")
+'''
 all_losses = []
 all_val_losses = []
 all_accuracies = []
 all_val_accuracies = []
-
-path_to_model = os.path.join(os.path.dirname(__file__), 'model.keras')
-print(f"Path to model: {path_to_model}")
+main_model = None
+train_generator = None
+val_generator = None
+lr_scheduler = None
+SaveCheckpoint = None
+dataset_was_got = False'''
 
 # Save statistic
 def save_metrics():
@@ -37,7 +35,7 @@ def save_metrics():
     }
     with open('metrics.json', 'w') as f:
         json.dump(metrics, f)
-        print(f.__dir__())
+    print("Metrics saved to metrics.json")
 
 # Load statistic
 def load_metrics():
@@ -49,43 +47,35 @@ def load_metrics():
             all_val_losses = metrics.get('all_val_losses', [])
             all_accuracies = metrics.get('all_accuracies', [])
             all_val_accuracies = metrics.get('all_val_accuracies', [])
+        print("Metrics loaded from metrics.json")
 
 # Create or load model
 def get_model():
     try:
         if tf.io.gfile.exists(path_to_model):
             model = keras.models.load_model(path_to_model)
+            print("Model returned")
             return model
         else:
             print('Model not found, creating a new one')
 
         model = tf.keras.models.Sequential([
-            keras.layers.Conv2D(32, (3,3), activation="relu", input_shape=(30, 30, 3)),
+            keras.layers.Conv2D(32, (3, 3), activation="relu", input_shape=(30, 30, 3)),
             keras.layers.MaxPooling2D((2, 2), strides=(2, 2)),
-
-            keras.layers.Conv2D(64, (3,3), activation="relu"),
+            keras.layers.Conv2D(64, (3, 3), activation="relu"),
             keras.layers.MaxPooling2D((2, 2), strides=(2, 2)),
-
-            keras.layers.Conv2D(128, (3,3), activation="relu"),
+            keras.layers.Conv2D(128, (3, 3), activation="relu"),
             keras.layers.MaxPooling2D((2, 2), strides=(2, 2)),
-
             keras.layers.Flatten(),
-
             keras.layers.Dense(512, activation="relu"),
-
             keras.layers.Dense(256, activation="relu"),
-
             keras.layers.Dense(64, activation="relu"),
-
             keras.layers.Dense(2, activation='softmax')
         ])
-        model.compile(optimizer='adam',
-            loss='categorical_crossentropy',
-            metrics=['accuracy'])
+        model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
         model.summary()
-        tf.keras.models.save_model(
-            model, path_to_model, overwrite=True,
-            include_optimizer=True, save_format=None)
+        tf.keras.models.save_model(model, path_to_model, overwrite=True, include_optimizer=True, save_format=None)
+        print("Model returned")
         return model
     except Exception as e:
         print(f"Error while loading NN happened: {e}")
@@ -104,35 +94,27 @@ def prepare_dataset(images, outputs):
         validation_split=0.2
     )
     val_datagen = ImageDataGenerator(validation_split=0.2)
-    train_generator = datagen.flow(
-        images,
-        outputs,
-        batch_size=64,
-        subset='training',
-        shuffle=True
-    )
-    val_generator = val_datagen.flow(
-        images,
-        outputs,
-        batch_size=64,
-        subset='validation',
-        shuffle=False
-    )
+    train_generator = datagen.flow(images, outputs, batch_size=64, subset='training', shuffle=True)
+    val_generator = val_datagen.flow(images, outputs, batch_size=64, subset='validation', shuffle=False)
 
-    lr_scheduler = keras.callbacks.ReduceLROnPlateau(
-        monitor='accuracy', factor=0.5, patience=3, min_lr=1e-6
-    )
-    SaveCheckpoint = tf.keras.callbacks.ModelCheckpoint(path_to_model,
+    lr_scheduler = keras.callbacks.ReduceLROnPlateau(monitor='accuracy', factor=0.5, patience=3, min_lr=1e-6)
+    SaveCheckpoint = tf.keras.callbacks.ModelCheckpoint(
+        path_to_model,
         monitor='accuracy',
         verbose=1,
         save_best_only=True,
         save_weights_only=False,
         mode='auto',
-        save_freq='epoch')
+        save_freq='epoch'
+    )
 
 def go_epochs(epochs_count):
-    global all_losses, all_val_losses, all_accuracies, all_val_accuracies, main_model
+    global all_losses, all_val_losses, all_accuracies, all_val_accuracies, main_model, train_generator, val_generator
+    if main_model is None or train_generator is None or val_generator is None:
+        raise ValueError("Model or generators not initialized. Run main() first.")
     load_metrics()
+    print("GO EPOCHS CALLED")
+    print(f"main_model: {main_model}")
     history = main_model.fit(
         train_generator,
         epochs=epochs_count,
@@ -143,7 +125,7 @@ def go_epochs(epochs_count):
     all_val_losses.extend(history.history['val_loss'])
     all_accuracies.extend(history.history['accuracy'])
     all_val_accuracies.extend(history.history['val_accuracy'])
-    print("Updated metrics:", all_losses, all_val_losses, all_accuracies, all_val_accuracies)
+    print("Updated metrics:", len(all_losses), len(all_val_losses), len(all_accuracies), len(all_val_accuracies))
     save_metrics()
 
 def get_graphic(losses, val_losses, accuracies, val_accuracies):
@@ -156,8 +138,8 @@ def get_graphic(losses, val_losses, accuracies, val_accuracies):
         raise ValueError(f"Length of lists of metrics is different: {lengths}")
     fig = go.Figure(
         data=[
-            go.Scatter(x=list(range(len(losses))), y=losses, name='Train Loss', line=dict(color='blue')),
-            go.Scatter(x=list(range(len(val_losses))), y=val_losses, name='Validation Loss', line=dict(color='red')),
+            # go.Scatter(x=list(range(len(losses))), y=losses, name='Train Loss', line=dict(color='blue')),
+            # go.Scatter(x=list(range(len(val_losses))), y=val_losses, name='Validation Loss', line=dict(color='red')),
             go.Scatter(x=list(range(len(accuracies))), y=accuracies, name='Train Accuracy', line=dict(color='green')),
             go.Scatter(x=list(range(len(val_accuracies))), y=val_accuracies, name='Validation Accuracy', line=dict(color='orange')),
         ],
@@ -167,8 +149,7 @@ def get_graphic(losses, val_losses, accuracies, val_accuracies):
         xaxis_title="Epoch",
         yaxis_title="Value",
         yaxis_range=[0, 1],
-        template='plotly_dark',
-        barmode='group'
+        template='plotly_dark'
     )
     return fig
 
@@ -180,13 +161,24 @@ async def fetch_data(session, url, filepath):
             await f.write(data)
         return filepath
 
-dataset_was_got = False
 async def main():
-    global main_model
-    main_model = get_model()
-    # Getting dataset from 'dataset_manager' microservice
+    global all_losses, all_val_losses, all_accuracies, all_val_accuracies
+    global main_model, train_generator, val_generator, lr_scheduler, SaveCheckpoint, dataset_was_got
+
+    print("main() called")
+    # Сброс переменных
+    all_losses = []
+    all_val_losses = []
+    all_accuracies = []
+    all_val_accuracies = []
+    main_model = None
+    train_generator = None
+    val_generator = None
+    lr_scheduler = None
+    SaveCheckpoint = None
+    dataset_was_got = False
+
     async with aiohttp.ClientSession() as session:
-        global dataset_was_got
         for i in range(60):
             print(f'Attempt {i}')
             try:
@@ -202,6 +194,7 @@ async def main():
                 print('Outputs shape:', outputs.shape)
                 print('Dataset was got')
                 prepare_dataset(images, outputs)
+                main_model = get_model()
                 dataset_was_got = True
                 break
             except aiohttp.client_exceptions.ClientConnectorError as e:
@@ -213,7 +206,6 @@ async def main():
     if not dataset_was_got:
         print("Dataset wasnt got.")
         exit(1)
-    go_epochs(10)
 
 if __name__ == '__main__':
     asyncio.run(main())

@@ -1,7 +1,9 @@
 from flask import Flask, Response, request
 import numpy as np
 import nn_script
+from nn_script import go_epochs, main
 from flask_cors import CORS
+import asyncio
 
 app = Flask(__name__)
 
@@ -26,7 +28,7 @@ def pass_epochs():
             return {'Response': f'Epochs count was not an integer ({type(epochs_count).__name__}, {epochs_count})'}, 400
         if epochs_count <= 0:
             return {'Response': f'Epochs count cant be zero or less, it should be at least 1 ({epochs_count})'}, 400
-        nn_script.go_epochs(epochs_count)
+        go_epochs(epochs_count)
         return {'Response': f'{epochs_count} epochs has successfully run!'}, 200
     except Exception as e:
         return {'Response': f'Unexpected error has occured: {e}, ({type(e)})'}, 500
@@ -50,4 +52,6 @@ def graphic():
         return {'Response': f'Unexpected error has occured: {e}, ({type(e)})'}, 500
 
 if __name__ == '__main__':
+    asyncio.run(main())
+    go_epochs(10)
     app.run(host='0.0.0.0', port=5001, ssl_context=None)
