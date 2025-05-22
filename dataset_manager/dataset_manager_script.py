@@ -42,7 +42,7 @@ async def process_images(folder, category):
             print(f"Path: {path}\n{i+1}/{max_files_count}")
             img = Image.open(path)
             img = img.convert("RGB")
-            img_resized = img.resize((30, 30), Image.Resampling.LANCZOS)
+            img_resized = img.resize((50, 50), Image.Resampling.LANCZOS)
             img_array = ((np.array(img_resized) / 127.5) - 1).astype(np.float32)
             images.append(img_array)
             outputs.append([0] * 2)

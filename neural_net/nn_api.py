@@ -29,7 +29,7 @@ def pass_epochs():
         if epochs_count <= 0:
             return {'Response': f'Epochs count cant be zero or less, it should be at least 1 ({epochs_count})'}, 400
         go_epochs(epochs_count)
-        return {'Response': f'{epochs_count} epochs has successfully run!'}, 200
+        return {'Response': f'{epochs_count} epochs have successfully run!'}, 200
     except Exception as e:
         return {'Response': f'Unexpected error has occured: {e}, ({type(e)})'}, 500
 
@@ -53,5 +53,5 @@ def graphic():
 
 if __name__ == '__main__':
     asyncio.run(main())
-    go_epochs(10)
+    go_epochs(5)
     app.run(host='0.0.0.0', port=5001, ssl_context=None)

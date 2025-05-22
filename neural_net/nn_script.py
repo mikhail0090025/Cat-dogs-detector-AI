@@ -60,16 +60,38 @@ def get_model():
             print('Model not found, creating a new one')
 
         model = tf.keras.models.Sequential([
-            keras.layers.Conv2D(32, (3, 3), activation="relu", input_shape=(30, 30, 3)),
+            # Первый сверточный блок
+            keras.layers.Conv2D(32, (3, 3), activation="relu", input_shape=(50, 50, 3), padding="same"),
+            keras.layers.BatchNormalization(),
+            keras.layers.Conv2D(32, (3, 3), activation="relu", padding="same"),
+            keras.layers.BatchNormalization(),
             keras.layers.MaxPooling2D((2, 2), strides=(2, 2)),
-            keras.layers.Conv2D(64, (3, 3), activation="relu"),
+            keras.layers.Dropout(0.3),
+
+            # Второй сверточный блок
+            keras.layers.Conv2D(64, (3, 3), activation="relu", padding="same"),
+            keras.layers.BatchNormalization(),
+            keras.layers.Conv2D(64, (3, 3), activation="relu", padding="same"),
+            keras.layers.BatchNormalization(),
             keras.layers.MaxPooling2D((2, 2), strides=(2, 2)),
-            keras.layers.Conv2D(128, (3, 3), activation="relu"),
+            keras.layers.Dropout(0.3),
+
+            # Третий сверточный блок
+            keras.layers.Conv2D(128, (3, 3), activation="relu", padding="same"),
+            keras.layers.BatchNormalization(),
+            keras.layers.Conv2D(128, (3, 3), activation="relu", padding="same"),
+            keras.layers.BatchNormalization(),
             keras.layers.MaxPooling2D((2, 2), strides=(2, 2)),
-            keras.layers.Flatten(),
-            keras.layers.Dense(512, activation="relu"),
+            keras.layers.Dropout(0.3),
+
+            # Переход к полносвязной части
+            keras.layers.GlobalAveragePooling2D(),
             keras.layers.Dense(256, activation="relu"),
+            keras.layers.BatchNormalization(),
+            keras.layers.Dropout(0.5),
             keras.layers.Dense(64, activation="relu"),
+            keras.layers.BatchNormalization(),
+            keras.layers.Dropout(0.5),
             keras.layers.Dense(2, activation='softmax')
         ])
         model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
@@ -84,14 +106,14 @@ def get_model():
 def prepare_dataset(images, outputs):
     global train_generator, val_generator, lr_scheduler, SaveCheckpoint
     datagen = ImageDataGenerator(
-        rotation_range=10,
-        width_shift_range=0.05,
-        height_shift_range=0.05,
-        brightness_range=[0.9, 1.1],
-        horizontal_flip=False,
-        zoom_range=0.1,
+        rotation_range=40,
+        width_shift_range=0.2,
+        height_shift_range=0.2,
+        brightness_range=[0.85, 1.15],
+        horizontal_flip=True,
+        zoom_range=0.25,
         fill_mode='nearest',
-        validation_split=0.2
+        validation_split=0.15
     )
     val_datagen = ImageDataGenerator(validation_split=0.2)
     train_generator = datagen.flow(images, outputs, batch_size=64, subset='training', shuffle=True)
@@ -148,7 +170,7 @@ def get_graphic(losses, val_losses, accuracies, val_accuracies):
     fig.update_layout(
         xaxis_title="Epoch",
         yaxis_title="Value",
-        yaxis_range=[0, 1],
+        yaxis_range=[min(min(accuracies), min(val_accuracies)), 1],
         template='plotly_dark'
     )
     return fig
