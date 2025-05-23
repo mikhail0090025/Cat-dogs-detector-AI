@@ -63,22 +63,16 @@ def get_model():
             # Первый сверточный блок
             keras.layers.Conv2D(32, (3, 3), activation="relu", input_shape=(50, 50, 3), padding="same"),
             keras.layers.BatchNormalization(),
-            keras.layers.Conv2D(32, (3, 3), activation="relu", padding="same"),
-            keras.layers.BatchNormalization(),
             keras.layers.MaxPooling2D((2, 2), strides=(2, 2)),
             keras.layers.Dropout(0.3),
 
             # Второй сверточный блок
             keras.layers.Conv2D(64, (3, 3), activation="relu", padding="same"),
             keras.layers.BatchNormalization(),
-            keras.layers.Conv2D(64, (3, 3), activation="relu", padding="same"),
-            keras.layers.BatchNormalization(),
             keras.layers.MaxPooling2D((2, 2), strides=(2, 2)),
             keras.layers.Dropout(0.3),
 
             # Третий сверточный блок
-            keras.layers.Conv2D(128, (3, 3), activation="relu", padding="same"),
-            keras.layers.BatchNormalization(),
             keras.layers.Conv2D(128, (3, 3), activation="relu", padding="same"),
             keras.layers.BatchNormalization(),
             keras.layers.MaxPooling2D((2, 2), strides=(2, 2)),

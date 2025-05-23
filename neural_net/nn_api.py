@@ -4,6 +4,9 @@ import nn_script
 from nn_script import go_epochs, main
 from flask_cors import CORS
 import asyncio
+import requests
+import json
+from urllib.parse import quote
 
 app = Flask(__name__)
 
@@ -50,6 +53,29 @@ def graphic():
         return {'graph': graph_json}
     except Exception as e:
         return {'Response': f'Unexpected error has occured: {e}, ({type(e)})'}, 500
+
+@app.route("/predict", methods=['GET'])
+def predict():
+    try:
+        data = request.get_json()
+        if not data:
+            return {'Response': 'No JSON data provided'}, 400
+        url = data.get('url')
+        print(f"url: {url}")
+
+        image_response = requests.get(f"http://dataset_manager:5000/image_to_inputs?url={quote(url, safe='')}")
+        print(image_response)
+        image_response.raise_for_status()
+        image = json.loads(image_response.text)
+        image = np.array(image['image'])
+        prediction = nn_script.main_model.predict(np.array([image]), verbose=1)
+        response = {
+            'prediction': prediction.tolist()[0],
+            'predicted_number': prediction.tolist()[0].index(max(prediction.tolist()[0])),
+        }
+        return {'Response': json.dumps(response)}, 200
+    except Exception as e:
+        return {'error': e}, 500
 
 if __name__ == '__main__':
     asyncio.run(main())
