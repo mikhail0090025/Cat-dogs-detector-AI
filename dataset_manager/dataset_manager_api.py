@@ -1,11 +1,11 @@
-from flask import Flask, send_file, jsonify
+from flask import Flask, send_file, jsonify, request
 import numpy as np
 import dataset_manager_script
 import os
 import json
-from PIL import Image, UnidentifiedImageError
-import json
 import requests
+import aiohttp
+from PIL import Image, UnidentifiedImageError
 import io
 
 from flask_cors import CORS
@@ -29,14 +29,6 @@ def get_outputs():
     if not os.path.exists('numpy_dataset.npz'):
         return jsonify({'error': 'Dataset file not found'}), 404
     return send_file('numpy_dataset.npz', mimetype='application/zip', as_attachment=True, download_name='outputs.npz')
-
-from flask import Flask, request
-import aiohttp
-from PIL import Image, UnidentifiedImageError
-import io
-import numpy as np
-
-app = Flask(__name__)
 
 @app.route("/image_to_inputs", methods=['GET'])
 async def image_to_inputs():
