@@ -9,7 +9,9 @@
 </head>
 <body>
     <h1>Welcome to the Frontend Microservice!</h1>
-    <div id="graph"></div>
+    <div id="accuracy_graph"></div>
+    <div id="loss_graph"></div>
+    <div id="lr_graph"></div>
 
     <script>
         function loadGraph() {
@@ -18,7 +20,9 @@
                 .then(data => {
                     try {console.log(data);} catch{console.log('data is not defined');}
                     try{console.log(data.graph);} catch{console.log('data.graph is not defined');}
-                    Plotly.newPlot('graph', JSON.parse(data.graph), {});
+                    Plotly.newPlot('accuracy_graph', JSON.parse(data.accuracy_json), {});
+                    Plotly.newPlot('loss_graph', JSON.parse(data.loss_json), {});
+                    Plotly.newPlot('lr_graph', JSON.parse(data.lr_json), {});
                 })
                 .catch(error => {
                     console.error('Error loading graphic:', error);

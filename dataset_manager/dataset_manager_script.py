@@ -35,15 +35,15 @@ async def extract_zip(zip_path, extract_to):
 async def process_images(folder, category):
     global images, outputs
     all_files = os.listdir(folder)
-    max_files_count = 2000
+    max_files_count = 2500
     for i, filename in enumerate(all_files[:max_files_count]):
         try:
             path = os.path.join(folder, filename)
             print(f"Path: {path}\n{i+1}/{max_files_count}")
             img = Image.open(path)
             img = img.convert("RGB")
-            img_resized = img.resize((50, 50), Image.Resampling.LANCZOS)
-            img_array = ((np.array(img_resized) / 127.5) - 1).astype(np.float32)
+            img_resized = img.resize((70, 70), Image.Resampling.LANCZOS)
+            img_array = (np.array(img_resized) / 255.0).astype(np.float32)
             images.append(img_array)
             outputs.append([0] * 2)
             outputs[-1][category] = 1
@@ -89,6 +89,8 @@ async def get_images():
         outputs = outputs[indexes]
         images = np.array(images, dtype=np.float32)
         outputs = np.array(outputs, dtype=np.float32)
+        print(images)
+        print(outputs)
         np.savez_compressed('numpy_dataset.npz', images=images, outputs=outputs)
         images_are_loaded = True
     except Exception as e:
