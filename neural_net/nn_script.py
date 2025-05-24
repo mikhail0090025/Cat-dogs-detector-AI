@@ -64,34 +64,35 @@ def get_model():
             print('Model not found, creating a new one')
 
         model = tf.keras.models.Sequential([
-            keras.layers.Conv2D(32, (3, 3), activation="relu", input_shape=(70, 70, 3)),
-            # keras.layers.BatchNormalization(),
+            keras.layers.Conv2D(32, (3, 3), activation="relu", input_shape=(100, 100, 3)),
+            keras.layers.BatchNormalization(),
             keras.layers.MaxPooling2D((2, 2), strides=(2, 2)),
-            # keras.layers.Dropout(0.3),
+            keras.layers.Dropout(0.3),
 
             keras.layers.Conv2D(64, (3, 3), activation="relu"),
-            # keras.layers.BatchNormalization(),
+            keras.layers.BatchNormalization(),
             keras.layers.MaxPooling2D((2, 2), strides=(2, 2)),
-            # keras.layers.Dropout(0.3),
+            keras.layers.Dropout(0.3),
 
             keras.layers.Conv2D(128, (3, 3), activation="relu"),
-            # keras.layers.BatchNormalization(),
+            keras.layers.BatchNormalization(),
             keras.layers.MaxPooling2D((2, 2), strides=(2, 2)),
             # keras.layers.GlobalAveragePooling2D(),
             keras.layers.Flatten(),
-            # keras.layers.Dropout(0.3),
+            keras.layers.Dropout(0.3),
 
             keras.layers.Dense(2048, activation="relu"),
-            # keras.layers.BatchNormalization(),
-            # keras.layers.Dropout(0.4),
+            keras.layers.BatchNormalization(),
+            keras.layers.Dropout(0.4),
 
             keras.layers.Dense(256, activation="relu"),
-            # keras.layers.BatchNormalization(),
-            # keras.layers.Dropout(0.4),
+            keras.layers.BatchNormalization(),
+            keras.layers.Dropout(0.4),
 
             keras.layers.Dense(64, activation="relu"),
+            keras.layers.BatchNormalization(),
             keras.layers.Dense(32, activation="relu"),
-            # keras.layers.BatchNormalization(),
+            keras.layers.BatchNormalization(),
             keras.layers.Dense(2, activation='softmax')
         ])
         optimizer = Adam(learning_rate=0.0001)
@@ -158,8 +159,8 @@ def prepare_dataset(images, outputs):
     # No augmentation
     # datagen = ImageDataGenerator(validation_split=0.2)
     val_datagen = ImageDataGenerator(validation_split=0.2)
-    train_generator = datagen.flow(images, outputs, batch_size=32, subset='training', shuffle=True)
-    val_generator = val_datagen.flow(images, outputs, batch_size=32, subset='validation', shuffle=False)
+    train_generator = datagen.flow(images, outputs, batch_size=64, subset='training', shuffle=True)
+    val_generator = val_datagen.flow(images, outputs, batch_size=64, subset='validation', shuffle=False)
 
     lr_scheduler = keras.callbacks.ReduceLROnPlateau(
         monitor='val_accuracy',

@@ -4,11 +4,80 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Main Page with Graph</title>
-    <!-- Подключение plotly.js из CDN -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/1.33.1/plotly.min.js" integrity="sha512-V0j9LhrK9IMNdFYZqh+IqU4cjo7wdxyHNyH+L0td4HryBuZ7Oq6QxP2/CWr6TituX31+gv5PnolvERuTbz8UNA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+        }
+        h4 {
+            color: #34495e;
+            margin-top: 20px;
+        }
+        div {
+            margin-bottom: 25px;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        input[type="text"], input[type="number"] {
+            padding: 8px;
+            width: 250px;
+            margin-right: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        #accuracy_graph, #loss_graph, #lr_graph {
+            width: 100%;
+            max-width: 800px;
+            height: 400px;
+            margin: 0 auto 20px auto;
+        }
+        p {
+            font-size: 16px;
+            color: #7f8c8d;
+        }
+        #test_image {
+            max-width: 200px;
+            max-height: 200px;
+            margin-top: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+    </style>
 </head>
 <body>
-    <h1>Welcome to the Frontend Microservice!</h1>
+    <div>
+        <h4>Time for epoch</h4>
+        <button id="time_for_epoch_btn">Get time for 1 epoch</button>
+        <p id="time_for_epoch_lbl"></p>
+    </div>
+    <div>
+        <h4>Test neural net</h4>
+        <input type="text" id="test_url">
+        <button id="test_btn">Test neural net</button>
+        <p id="test_lbl"></p>
+        <img id="test_image" src="" alt="Test Image" style="display: none;">
+    </div>
+    <div>
+        <h4>Pass epochs</h4>
+        <input type="number" id="epochs_count" min="1" max="1000" value="10">
+        <button id="go_epochs_button">Go epochs</button>
+        <p id="epochs_response"></p>
+    </div>
     <div id="accuracy_graph"></div>
     <div id="loss_graph"></div>
     <div id="lr_graph"></div>
@@ -18,8 +87,6 @@
             fetch('http://localhost:5001/graphic')
                 .then(response => response.json())
                 .then(data => {
-                    try {console.log(data);} catch{console.log('data is not defined');}
-                    try{console.log(data.graph);} catch{console.log('data.graph is not defined');}
                     Plotly.newPlot('accuracy_graph', JSON.parse(data.accuracy_json), {});
                     Plotly.newPlot('loss_graph', JSON.parse(data.loss_json), {});
                     Plotly.newPlot('lr_graph', JSON.parse(data.lr_json), {});
@@ -28,6 +95,73 @@
                     console.error('Error loading graphic:', error);
                 });
         }
+
+        document.getElementById('time_for_epoch_btn').onclick = function(){
+            fetch('http://localhost:5001/time_for_epoch')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('time_for_epoch_lbl').innerText = data.Response;
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    document.getElementById('time_for_epoch_lbl').innerText = 'Error: ' + error.message;
+                });
+        };
+
+        document.getElementById('test_btn').onclick = function(){
+            const url = document.getElementById('test_url').value;
+            if (!url || !url.startsWith('http')) {
+                document.getElementById('test_lbl').innerText = 'Enter valid URL';
+                document.getElementById('test_image').style.display = 'none';
+                return;
+            }
+            fetch('http://localhost:5001/predict', {
+                method: "POST",
+                body: JSON.stringify({'url': url}),
+                "headers": {
+                    "Content-Type": "application/json",
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    console.log(data);
+                    const animal = data.response.prediction_animal;
+                    const probabilities = data.response.prediction.map(p => (p * 100).toFixed(1) + '%');
+                    document.getElementById('test_lbl').innerText = `Predicted: ${animal} (Cat: ${probabilities[0]}, Dog: ${probabilities[1]})`;
+                    // Добавляем отображение картинки
+                    const testImage = document.getElementById('test_image');
+                    testImage.src = url;
+                    testImage.style.display = 'block';
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    document.getElementById('test_lbl').innerText = 'Error: ' + error.message;
+                    document.getElementById('test_image').style.display = 'none';
+                });
+        };
+
+        document.getElementById('go_epochs_button').onclick = function(){
+            const epochs = document.getElementById('epochs_count').valueAsNumber;
+            if (isNaN(epochs) || epochs < 1) {
+                document.getElementById('epochs_response').innerText = 'Epochs count has to be > 0';
+                return;
+            }
+            fetch('http://localhost:5001/pass_epochs', {
+                method: "POST",
+                body: JSON.stringify({'epochs_count': epochs}),
+                "headers": {
+                    "Content-Type": "application/json",
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('epochs_response').innerText = data.Response;
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    document.getElementById('epochs_response').innerText = 'Error: ' + error.message;
+                });
+        };
 
         window.onload = loadGraph;
     </script>

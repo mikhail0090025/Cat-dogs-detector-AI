@@ -51,12 +51,12 @@ async def image_to_inputs():
             img = img.convert("RGB")
 
         # Изменение размера с проверкой
-        img_resized = img.resize((70, 70), Image.Resampling.LANCZOS if hasattr(Image, 'Resampling') else Image.LANCZOS)
+        img_resized = img.resize((100, 100), Image.Resampling.LANCZOS if hasattr(Image, 'Resampling') else Image.LANCZOS)
         img_array = np.array(img_resized) / 255.0
 
         # Проверка формы и диапазона
-        if img_array.shape != (70, 70, 3):
-            return jsonify({"error": f"Expected image shape (70, 70, 3), got {img_array.shape}"}), 400
+        if img_array.shape != (100, 100, 3):
+            return jsonify({"error": f"Expected image shape (100, 100, 3), got {img_array.shape}"}), 400
         if not (img_array.min() >= 0 and img_array.max() <= 1):
             return jsonify({"error": "Image array values out of expected range [0, 1]"}), 500
 
